@@ -1,0 +1,23 @@
+{
+  "name": "microplatform",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/microplatform.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sintaxi/microplatform.git"
+  },
+  "author": "Brock Whitten <brock@sintaxi.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sintaxi/microplatform/issues"
+  },
+  "homepage": "https://github.com/sintaxi/microplatform#readme",
+  "dependencies": {
+    "mocha": "^3.1.2",
+    "should": "^11.1.1"
+  }
+}
