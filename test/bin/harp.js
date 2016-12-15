@@ -6,5 +6,5 @@ module.exports = microplatform({
   domain: "harp.sh",
   cmd: "harp",
   version: "1.0.0",
-  server: microplatform.server
+  boilerplates: __dirname + "/../boilerplates"
 })
