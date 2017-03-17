@@ -8,5 +8,4 @@ process.on('SIGINT', function() {
   console.log()
   process.exit(1)
 })
-
 require("../").exec()
