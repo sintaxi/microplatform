@@ -1,11 +1,12 @@
 {
   "name": "microplatform",
   "version": "0.7.1",
-  "description": "Dev server + Static Site Generator + CDN Publishing",
+  "description": "WTF Dev server + Static Site Generator + CDN Publishing",
   "platform": "surge.sh",
   "boilerplate": "./test/boilerplates/hello-world",
   "cmd": "mp",
-  "main": "lib/microplatform.js",
+  "main": "./src/lib.js",
+  "bin": "./src/cli",
   "scripts": {
     "test": "mocha test"
   },
@@ -17,9 +18,6 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/sintaxi/microplatform/issues"
-  },
-  "bin": {
-    "mp": "./bin/mp"
   },
   "homepage": "https://github.com/sintaxi/microplatform#readme",
   "dependencies": {
