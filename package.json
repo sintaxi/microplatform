@@ -1,7 +1,10 @@
 {
   "name": "microplatform",
   "version": "0.7.1",
-  "description": "",
+  "description": "Dev server + Static Site Generator + CDN Publishing",
+  "platform": "surge.sh",
+  "boilerplate": "./test/boilerplates/hello-world",
+  "cmd": "mp",
   "main": "lib/microplatform.js",
   "scripts": {
     "test": "mocha test"
@@ -27,7 +30,7 @@
     "inquirer": "^2.0.0",
     "minimist": "^1.2.0",
     "read": "^1.0.7",
-    "surge": "^0.19.0",
+    "surge": "^0.20.1",
     "terminal-menu": "^2.1.1",
     "tmp": "0.0.29",
     "yargs": "^5.0.0"
