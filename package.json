@@ -1,7 +1,7 @@
 {
   "name": "microplatform",
   "version": "0.7.1",
-  "description": "WTF Dev server + Static Site Generator + CDN Publishing",
+  "description": "Dev server + Static Site Generator + CDN Publishing",
   "platform": "surge.sh",
   "boilerplate": "./test/boilerplates/hello-world",
   "cmd": "mp",
