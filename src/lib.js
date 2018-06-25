@@ -208,7 +208,7 @@ var microplatform = function(mstr){
       var argv = minimist(full.slice(2))
       var cmds = argv["_"]
 
-      if (cmds.length < 1) return quickhelp()
+      if (cmds.length < 1) return help()
         
       var hooks = {}
       if(cmds[0] === "help") {
