@@ -140,20 +140,8 @@ var microplatform = function(mstr){
       }
     }
 
-
     obj.compile = mstr.compile || fse.copy
-
-    obj.server = mstr.server || function(argv, done){
-      var port = process.env.PORT || argv.p || argv.port || 9000
-      var app = express()
-      app.use(express.static(argv["_"][0]))
-      done()
-      app.listen(port, function(){
-        console.log("   Dev server running ".grey + chalk.underline(chalk.grey("http://localhost:" + port)))
-        console.log()
-        return done(argv)
-      })
-    }
+    obj.server  = mstr.server  || []
 
     var findOrCreateProject = function(argv, callback){
       var projectPath = argv._[0]
@@ -203,7 +191,9 @@ var microplatform = function(mstr){
     }
 
 
-    obj.exec = function(arg){
+    obj.exec = function(arg, callback){
+      callback = callback || new Function
+
       var full = process.argv.slice()
       var argv = minimist(full.slice(2))
       var cmds = argv["_"]
@@ -231,7 +221,40 @@ var microplatform = function(mstr){
               console.log()
             })
           } else {
-            return obj.server(argv, new Function)
+            
+            var port = process.env.PORT || argv.p || argv.port || 9000
+
+            var server;
+            // we get an object that responds to listen (PRIVATE level API)
+            if (obj.server.listen){
+              server = obj.server
+            }else{
+
+              // // we get an array of middleware (MED level API)
+              // if (Array.isArray(obj.server)){
+              //   server = express()
+                
+              // } else {
+              //   // we get a function that we pass helpful args into (HIGH level API)
+              //   var tmpDir = tmp.dirSync()
+              //   middleware = obj.server(argv["_"][0], tmpDir)
+              // }
+
+              server = express(obj.server)
+              server.use(express.static(argv["_"][0]))
+
+              // middleware.forEach(function(m){
+              //   server.use(m)
+              // })
+              
+            }
+
+            server.listen(port, function(){
+              console.log("   Dev server running ".grey + chalk.underline(chalk.grey("http://localhost:" + port)))
+              console.log()
+              return callback(argv)
+            })
+
           }
         })
       }
@@ -241,4 +264,5 @@ var microplatform = function(mstr){
   }
 }
 
+pkg.server = []
 module.exports = microplatform()(pkg)
