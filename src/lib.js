@@ -184,7 +184,8 @@ var microplatform = function(mstr){
             })
           })
         } else {
-          console.log("    Compiling to", chalk.green(argv["_"][1]) )
+          prompt = "Compiling to: ".grey + chalk.grey.underline(projectPath)
+          console.log("   " + prompt)
           obj.compile(argv["_"][0], argv["_"][1], callback)
         }
       }
