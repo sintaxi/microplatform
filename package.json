@@ -1,11 +1,11 @@
 {
   "name": "microplatform",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Dev server + Static Site Generator + CDN Publishing",
   "platform": "surge.sh",
   "boilerplate": "./test/boilerplates/hello-world",
-  "main": "./src/lib.js",
-  "bin": "./src/cli",
+  "main": "./platform.js",
+  "bin": "./mp",
   "scripts": {
     "test": "mocha test"
   },
