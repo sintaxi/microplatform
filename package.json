@@ -28,6 +28,7 @@
     "minimist": "^1.2.0",
     "read": "^1.0.7",
     "surge": "^0.20.1",
+    "sync-exec": "^0.6.2",
     "terminal-menu": "^2.1.1",
     "tmp": "0.0.29",
     "yargs": "^5.0.0"

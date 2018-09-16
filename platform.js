@@ -8,7 +8,7 @@ var read      = require("read")
 var fse       = require("fs-extra")
 var tmp       = require("tmp")
 var express   = require("express")
-
+var syncexec  = require("sync-exec")
 var inquirer  = require('inquirer')
 var choices   = require("choices")
 var Menu      = require('terminal-menu')
@@ -164,6 +164,21 @@ var microplatform = function(mstr){
     }
 
 
+    var installSync = function(argv){
+      var projectPath = argv._[0]
+      var projectAbsolutePath = path.resolve(projectPath)
+      var command = `cd ${projectAbsolutePath}; npm install`
+      try{ 
+        var pkg = require(projectAbsolutePath + "/package.json")
+        console.log("   " + "Installing dependencies: ".grey + chalk.grey.underline("npm install"))
+        console.log()
+        syncexec(command, { stdio: [0, 1, 2] })
+      }catch(r){
+        console.log("   " + "Not Found: package.json".grey)
+      }
+    }
+
+
     var compileOrPublish = function(argv, callback){
       if (argv._.length > 1) {
         var destination = argv._[1]
@@ -217,11 +232,13 @@ var microplatform = function(mstr){
         platform.teardown(hooks)(argv._.slice(1))
       } else {
         console.log()
+
         findOrCreateProject(argv, function(argv){
+          installSync(argv)
           if (argv._.length > 1){
             compileOrPublish(argv, function(argv){
               console.log()
-            })
+            })  
           } else {
             
             var port = process.env.PORT || argv.p || argv.port || 9000
