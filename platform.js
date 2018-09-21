@@ -208,16 +208,33 @@ var microplatform = function(mstr){
     }
 
 
-    obj.exec = function(arg, callback){
-      callback = callback || new Function
+    obj.exec = function(args, callback){
 
-      var full = process.argv.slice()
-      var argv = minimist(full.slice(2))
+      // we only have a callback
+      if (typeof args === 'function'){
+        callback = args
+        args = null
+      }
+
+      // fetch args from process
+      if (!args)
+        args = process.slice(2)
+
+      // change string args to array
+      if (typeof args === 'string')
+        args = args.match(/\S+/g) || []
+
+      // change array arguments to minimist object
+      var argv = minimist(args)
       var cmds = argv["_"]
 
+      // no aguments we output help message
       if (cmds.length < 1) return help()
-        
+      
+      // may use surg hooks in future API
       var hooks = {}
+
+      // check for reserved command
       if(cmds[0] === "help") {
         return help()
       } else if(cmds[0] === "whoami") {
@@ -238,11 +255,10 @@ var microplatform = function(mstr){
           if (argv._.length > 1){
             compileOrPublish(argv, function(argv){
               console.log()
+              return callback()
             })  
           } else {
-            
             var port = process.env.PORT || argv.p || argv.port || 9000
-
             var server;
             // we get an object that responds to listen (PRIVATE level API)
             if (obj.server.listen){

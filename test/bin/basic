@@ -1,3 +1,5 @@
 #!/usr/bin/env node
 
-require("./basic.js").exec()
+console.log(process.argv.slice(2))
+
+require("./basic.js").exec(process.argv.slice(2))
