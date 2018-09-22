@@ -1,6 +1,6 @@
 
 var path      = require("path")
-var pkg       = require("./package.json")
+var pkg       = require("../package.json")
 var surge     = require("surge")
 var chalk     = require("chalk")
 var minimist  = require("minimist")
@@ -12,6 +12,7 @@ var syncexec  = require("sync-exec")
 var inquirer  = require('inquirer')
 var choices   = require("choices")
 var Menu      = require('terminal-menu')
+
 
 var microplatform = function(mstr){
   if (!mstr) mstr = {}

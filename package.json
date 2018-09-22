@@ -4,8 +4,8 @@
   "description": "Dev server + Static Site Generator + CDN Publishing",
   "platform": "surge.sh",
   "boilerplate": "./test/boilerplates/hello-world",
-  "main": "./platform.js",
-  "bin": "./mp",
+  "main": "./src/lib.js",
+  "bin": "./src/cli",
   "scripts": {
     "test": "mocha test"
   },
