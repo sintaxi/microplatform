@@ -12,7 +12,7 @@ var syncexec  = require("sync-exec")
 var inquirer  = require('inquirer')
 var choices   = require("choices")
 var Menu      = require('terminal-menu')
-
+var helpers   = require('./helpers')
 
 var microplatform = function(mstr){
   if (!mstr) mstr = {}
@@ -25,76 +25,7 @@ var microplatform = function(mstr){
     var platform = surge({
       name: mstr.name,
       platform: mstr.platform
-    })
-
-    var help = function(){
-      var versiontxt = ''
-      if (mstr.version){
-        versiontxt = chalk.grey("v" + mstr.version)
-      }
-      console.log()
-      console.log(chalk.grey("  "+ mstr.name +" "+ versiontxt) + " / ".grey + chalk.underline.grey(mstr.platform))
-      console.log(chalk.grey("  "+ mstr.description))
-      console.log()
-      console.log(chalk.grey("  Usage:"))
-      console.log("    "+ mstr.name +" <source>             Starts dev server on <source> directory")
-      console.log("    "+ mstr.name +" <source> <domain>    Publishes <source> directory to the web at <domain>")
-      console.log("    "+ mstr.name +" <source> <output>    Compiles <source> into <output>")
-      console.log()
-      console.log(chalk.grey("  Global Commands:"))
-      console.log("    "+ mstr.name +" list                 List all projects")
-      console.log("    "+ mstr.name +" whoami               Show authenticated user")
-      console.log("    "+ mstr.name +" plan                 Upgrade/downgrade surge account")
-      console.log("    "+ mstr.name +" login                Authenticate and begin session")
-      console.log("    "+ mstr.name +" logout               Terminate session")
-      console.log("    "+ mstr.name +" help                 This help message")
-      console.log()
-      console.log(chalk.grey("  Project Commands:"))
-      console.log("    "+ mstr.name +" teardown <domain>    Removes <domain> from the web")
-      console.log()
-      console.log(chalk.grey("  Examples:"))
-      console.log("    "+ mstr.name +" .                    Serves current dir on port 9966")
-      console.log("    "+ mstr.name +" . example.com        Publishes current dir to 'example.com'")
-      console.log("    "+ mstr.name +" . www                Compiles current dir to 'www' directory")
-      console.log("    "+ mstr.name +" . _                  Publishes and generates sub domain")
-      console.log()
-      console.log(chalk.grey("  please visit ") + chalk.underline.grey(mstr.platform) + chalk.grey(" for more information"))
-      console.log()
-      return process.exit()
-    }
-
-    var quickhelp = function(){
-      var versiontxt = ''
-      if (mstr.version){
-        versiontxt = chalk.grey("v" + mstr.version)
-      }
-      console.log()
-      console.log(chalk.grey("  "+ mstr.name +" "+ versiontxt) + " / ".grey + chalk.underline.grey(mstr.platform))
-      console.log(chalk.grey("  "+ mstr.description))
-      console.log()
-      console.log(chalk.grey("  Usage: "))
-      console.log("    " + mstr.name +" <project> [domain]")
-      console.log()
-      console.log(chalk.grey("  Examples:"))
-      console.log("    "+ mstr.name +" ./                    Serves current dir on port 9966")
-      console.log("    "+ mstr.name +" ./ example.com        Publishes current dir to 'example.com'")
-      console.log("    "+ mstr.name +" help                  Displays more info")
-      console.log()
-      return process.exit()
-    }
-
-    var isDomain = function(destination){
-      if (destination == "_"){
-        return true
-      }
-      if (destination.indexOf("./") === 0){
-        return false
-      }
-      if (destination.split(".").length > 1){
-        return true
-      }
-      return false
-    } 
+    }) 
 
     obj.init = mstr.init || function(argv, done){
       if (mstr.boilerplates){
@@ -105,7 +36,6 @@ var microplatform = function(mstr){
             //return {  title: dir, value: dir }
             return dir
           })
-
           if (dirs.length > 1){
             inquirer.prompt({
               type: 'list',
@@ -125,12 +55,14 @@ var microplatform = function(mstr){
               return done(argv)
             })
           } else {
+
             fse.writeFile(argv._[0] + "/index.html", "<!doctype html><h1>hello world</h1>", function(err){
               return done(argv)
             })
           }
         })
       }else if (mstr.boilerplate){
+        console.log(mstr.boilerplate)
         fse.copy(path.join(mstr.boilerplate), argv["_"][0], function(){
           console.log("   Project generated".grey, chalk.grey.underline(argv["_"][0]))
           return done(argv)
@@ -165,25 +97,10 @@ var microplatform = function(mstr){
     }
 
 
-    var installSync = function(argv){
-      var projectPath = argv._[0]
-      var projectAbsolutePath = path.resolve(projectPath)
-      var command = `cd ${projectAbsolutePath}; npm install`
-      try{ 
-        var pkg = require(projectAbsolutePath + "/package.json")
-        console.log("   " + "Installing dependencies: ".grey + chalk.grey.underline("npm install"))
-        console.log()
-        syncexec(command, { stdio: [0, 1, 2] })
-      }catch(r){
-        console.log("   " + "Not Found: package.json".grey)
-      }
-    }
-
-
     var compileOrPublish = function(argv, callback){
       if (argv._.length > 1) {
         var destination = argv._[1]
-        if (isDomain(destination)){
+        if (helpers.isDomain(destination)){
           var domain = destination
           tmp.dir(function(err, tmpPath, cleanupCallback) {
             if (err) throw err
@@ -208,6 +125,10 @@ var microplatform = function(mstr){
       }
     }
 
+    obj.settings = function(){
+      return mstr
+    }
+
 
     obj.exec = function(args, callback){
 
@@ -230,14 +151,15 @@ var microplatform = function(mstr){
       var cmds = argv["_"]
 
       // no aguments we output help message
-      if (cmds.length < 1) return help()
+      if (cmds.length < 1) 
+        return helpers.help(mstr)
       
       // may use surg hooks in future API
       var hooks = {}
 
       // check for reserved command
       if(cmds[0] === "help") {
-        return help()
+        return helpers.help(mstr)
       } else if(cmds[0] === "whoami") {
         platform.whoami(hooks)(argv._.slice(1))
       } else if(cmds[0] === "login") {
@@ -252,7 +174,7 @@ var microplatform = function(mstr){
         console.log()
 
         findOrCreateProject(argv, function(argv){
-          installSync(argv)
+          helpers.installSync(argv)
           if (argv._.length > 1){
             compileOrPublish(argv, function(argv){
               console.log()
@@ -301,4 +223,7 @@ var microplatform = function(mstr){
 }
 
 pkg.server = []
-module.exports = microplatform()(pkg)
+
+module.exports = microplatform()(pkg)({ 
+  boilerplate: path.resolve(__dirname, "../boilerplate")
+})
