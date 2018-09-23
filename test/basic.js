@@ -40,6 +40,7 @@ describe("microplatform", function(){
   
   it("should have access to properties", function(done){
     var properties = microplatform.settings()
+    properties.should.have.property("version")
     properties.should.have.property("name", "microplatform")
     done()
   })
