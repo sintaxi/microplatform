@@ -62,7 +62,6 @@ var microplatform = function(mstr){
           }
         })
       }else if (mstr.boilerplate){
-        console.log(mstr.boilerplate)
         fse.copy(path.join(mstr.boilerplate), argv["_"][0], function(){
           console.log("   Project generated".grey, chalk.grey.underline(argv["_"][0]))
           return done(argv)

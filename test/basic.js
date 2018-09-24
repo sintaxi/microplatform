@@ -9,8 +9,8 @@ var fse = require("fs-extra")
 describe("microplatform", function(){
 
   before(function(done){
-    microplatform.exec("foo _foo", function(err){
-      microplatform.exec("foo --port 9000", function(err){
+    microplatform.exec("test/temp/foo test/temp/_foo", function(err){
+      microplatform.exec("test/temp/foo --port 9000", function(err){
         done()
       })
     })
@@ -18,8 +18,8 @@ describe("microplatform", function(){
 
   var check = function(web, file, status, done){
     var webPath = url.resolve("http://localhost:9000", web)
-    var filePath = path.resolve(__dirname + "/../foo" + file)
-    var compilefilePath = path.resolve(__dirname + "/../_foo" + file)
+    var filePath = path.normalize(__dirname + "/temp/foo" + file)
+    var compilefilePath = path.normalize(__dirname + "/temp/_foo" +  file)
 
     request.get(webPath).end(function(err, res){
       
@@ -54,7 +54,9 @@ describe("microplatform", function(){
   })
 
   after(function(done){
-    done()
+    fse.remove(__dirname + "/temp",function(){
+      done()
+    })
   })
 
 })
