@@ -8,9 +8,28 @@ var fse = require("fs-extra")
 
 describe("microplatform", function(){
 
+  var contents = "<h1>foobar</h1>"
+
   before(function(done){
-    microplatform.exec("test/temp/foo test/temp/_foo", function(err){
-      microplatform.exec("test/temp/foo --port 9000", function(err){
+    
+    var platform = microplatform({
+      serve: function(project, server){
+        server([function(req, rsp, next){
+          if (["/foo", "/foo.html"].indexOf(req.url) === -1 ) return next()
+          rsp.send(contents)
+        }])
+      },
+      compile: function(project, compiler){
+        compiler([function(src, dist, next){
+          fse.writeFile(dist + "/foo.html", contents, function(err){
+            next()
+          })
+        }])
+      }
+    })
+
+    platform.exec("test/temp/foo test/temp/_foo", function(err){
+      platform.exec("test/temp/foo --port 9000", function(err){
         done()
       })
     })
@@ -51,6 +70,10 @@ describe("microplatform", function(){
 
   it("should return index.html file", function(done){
     check("/index.html", "/index.html", 200, done)
+  })
+
+  it("should return foo.html file", function(done){
+    check("/foo", "/foo.html", 200, done)
   })
 
   after(function(done){

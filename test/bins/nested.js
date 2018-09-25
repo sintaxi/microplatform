@@ -2,22 +2,28 @@
 
 var microplatform = require("../../")
 
+middleware = [
+  
+  function setGlobals (project, next) {
+    req.globals = globals
+    next()
+  },
+
+  function outputPlatform1 (project, next) {
+    console.log("platform1")
+    next()
+  },
+
+]
+
 var platform1 = microplatform({
   
-  server: function(globals){
-    return [
-      
-      function setGlobals (req, rsp, next) {
-        req.globals = globals
-        next()
-      },
+  serve: function(project, server){
+    server(middleware)
+  }
 
-      function outputPlatform1 (req, rsp, next) {
-        console.log("platform1")
-        next()
-      },
-
-    ]
+  compile: function(project, compiler){
+    compiler(compilers)
   }
 
 })

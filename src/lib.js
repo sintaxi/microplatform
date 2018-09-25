@@ -223,6 +223,5 @@ var microplatform = function(mstr){
 
 pkg.server = []
 
-module.exports = microplatform()(pkg)({ 
-  boilerplate: path.resolve(__dirname, "../boilerplate")
-})
+pkg.boilerplate = path.resolve(__dirname, "../boilerplate")
+module.exports = microplatform()(pkg)
