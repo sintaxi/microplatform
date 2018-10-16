@@ -1,6 +1,6 @@
 {
   "name": "microplatform",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Dev server + Static Site Generator + CDN Publishing",
   "platform": "surge.sh",
   "boilerplate": "./test/boilerplates/hello-world",

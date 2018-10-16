@@ -100,9 +100,7 @@ var microplatform = function(mstr){
       fse.readdir(projectAbsolutePath, function(err, contents){
         if (err || (contents && contents.length < 1)) {
           fse.mkdirp(projectAbsolutePath,function(){
-            obj.init(argv, function(){
-              return callback(argv)
-            })
+            obj.init(argv, callback)
           })
         } else {
           prompt = "Project found: ".grey + chalk.grey.underline(projectPath)
@@ -136,33 +134,7 @@ var microplatform = function(mstr){
         } else {
           prompt = "Compiling to: ".grey + chalk.grey.underline(argv["_"][1])
           console.log("   " + prompt)
-          //obj.compile(argv["_"][0], argv["_"][1], callback)
-
-          var total = mstr.compilers.length
-          var count = 0
-          var all   = []
-          mstr.compilers.forEach(function(cluster){
-            cluster({}, function(fns){
-              count++
-              all = all.concat(fns)
-              if (count == total){
-                var fntotal = all.length
-                var fncount = 0
-
-                // TODO: change this to onion skin
-                all.forEach(function(fn){
-                  fn.call(this, argv["_"][0], argv["_"][1], function(){
-                    fncount ++
-                    if (fncount == fntotal){
-                      //console.log(callback)
-                      return callback()
-                    } 
-                  })
-                })
-                //obj.compile(argv["_"][0], argv["_"][1], callback)
-              }
-            })
-          })
+          helpers.runCompilers(argv, mstr.compilers, callback)
         }
       }
     }

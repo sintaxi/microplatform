@@ -40,6 +40,7 @@ exports.help = function(config){
   return process.exit()
 }
 
+
 exports.quickhelp = function(config){
   var versiontxt = ''
   if (config.version){
@@ -59,6 +60,7 @@ exports.quickhelp = function(config){
   console.log()
   return process.exit()
 }
+
 
 exports.isDomain = function(destination){
   if (destination == "_"){
@@ -89,24 +91,43 @@ exports.installSync = function(argv){
 }
 
 
+exports.sift = function(record, stack, callback){
+  if(!stack) stack = []
+  
+  var that  = this;
+  var index = 0;
+  
+  function next(record){
+    var layer = stack[index++]
+    if(!layer) return callback(record)
+    layer.call(that, record, next)
+  }
+  
+  next(record)
+}
 
 
-exports.findOrCreateProject = function(argv, callback){
-  var projectPath = argv._[0]
-  var projectAbsolutePath = path.resolve(projectPath)
-  // check project to see if it exists or is empty
-  fse.readdir(projectAbsolutePath, function(err, contents){
-    if (err || (contents && contents.length < 1)) {
-      fse.mkdirp(projectAbsolutePath,function(){
-        surge().init
-        obj.init(argv, function(){
-          return callback(argv)
-        })
-      })
-    } else {
-      prompt = "Project found: ".grey + chalk.grey.underline(projectPath)
-      console.log("   " + prompt)
-      return callback(argv)
-    }
+exports.runCompilers = function(props, compilers, callback){
+  var total = compilers.length
+  var count = 0
+  var stack = []
+
+  compilers.forEach(function(cluster){
+    cluster({}, function(fns){
+      count++
+      stack = stack.concat(fns)
+      if (count == total){
+        var that = this
+        var index = 0
+
+        function next(){
+          var layer = stack[index++]
+          if(!layer) return callback()
+          layer.call(that, props["_"][0], props["_"][1], next)
+        }
+        next()
+      }
+    })
   })
+
 }
