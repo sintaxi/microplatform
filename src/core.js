@@ -245,10 +245,10 @@ var microplatform = function(mstr){
             })  
           } else {
             var port = process.env.PORT || argv.p || argv.port || 9000
-            var server;
+            var app;
             // we get an object that responds to listen (PRIVATE level API)
             if (obj.server.listen){
-              server = obj.server
+              app = obj.server
             }else{
 
               //server = express()
@@ -284,11 +284,11 @@ var microplatform = function(mstr){
                   all = all.concat(fns)
                   if (count == total){
                     
-                    server = express()
+                    app = express()
 
 
                     // custom middleare
-                    server.use(function(req, rsp, next){
+                    app.use(function(req, rsp, next){
                       if (req.url === "/"){ req.url = "/index.html" }
                       next()
                     })
@@ -296,12 +296,12 @@ var microplatform = function(mstr){
 
                     // custom middleare
                     all.forEach(function(m){
-                      server.use(m)
+                      app.use(m)
                     })
 
 
                     // look for virtual files first.
-                    server.use(function(req, rsp, next){
+                    app.use(function(req, rsp, next){
                       var fn = mstr.virtualFiles[req.url] || mstr.virtualFiles[req.url + ".html"] || null
                       // return object
                       var r = function(cont){ rsp.send(cont); }
@@ -314,11 +314,11 @@ var microplatform = function(mstr){
 
 
                     // static middleare goes here
-                    server.use(express.static(argv["_"][0]))
+                    app.use(express.static(argv["_"][0]))
 
 
                     // look for virtual 200 file.
-                    server.use(function(req, rsp, next){
+                    app.use(function(req, rsp, next){
                       var fn = mstr.virtualFiles["/200.html"] || null
                       // return object
                       var r = function(cont){ rsp.send(cont); }
@@ -331,7 +331,7 @@ var microplatform = function(mstr){
 
 
                     // fallback 200 file
-                    server.use(function(req, rsp, next){
+                    app.use(function(req, rsp, next){
                       fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
                         if(contents){
                           var body    = contents.toString()
@@ -347,7 +347,38 @@ var microplatform = function(mstr){
                       })
                     })
 
-                    server.listen(port, function(){
+
+                    // look for virtual 404 file.
+                    app.use(function(req, rsp, next){
+                      var fn = mstr.virtualFiles["/404.html"] || null
+                      // return object
+                      var r = function(cont){ rsp.send(cont); }
+                      r.send = r
+                      r.json = function(cont){ rsp.json(cont); }
+                      // use if virtual file exists
+                      if (fn) return fn({ argv: argv }, r)
+                      return next()
+                    })
+
+
+                    // fallback 404 file
+                    app.use(function(req, rsp, next){
+                      fse.readFile(path.resolve(argv["_"][0], "404.html"), function(err, contents){
+                        if(contents){
+                          var body      = contents.toString()
+                          //var type    = helpers.mimeType("html")
+                          //var charset = mime.charsets.lookup(type)
+                          //rsp.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
+                          //rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                          rsp.statusCode = 200
+                          rsp.end(body)
+                        }else{
+                          next()
+                        }
+                      })
+                    })
+
+                    app.listen(port, function(){
                       console.log("   Dev server running ".grey + chalk.underline(chalk.grey("http://localhost:" + port)))
                       console.log()
                       return callback(argv)
