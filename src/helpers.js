@@ -113,7 +113,7 @@ exports.runCompilers = function(props, compilers, callback){
   var stack = []
 
   compilers.forEach(function(cluster){
-    cluster({}, function(fns){
+    cluster(props, function(fns){
       count++
       stack = stack.concat(fns)
       if (count == total){
@@ -123,7 +123,7 @@ exports.runCompilers = function(props, compilers, callback){
         function next(){
           var layer = stack[index++]
           if(!layer) return callback()
-          layer.call(that, props["_"][0], props["_"][1], next)
+          layer.call(that, props.argv["_"][0], props.argv["_"][1], next)
         }
         next()
       }

@@ -24,6 +24,9 @@ var microplatform = function(mstr){
   if (!mstr.hasOwnProperty("compilers"))
     mstr.compilers = []
 
+  if (!mstr.hasOwnProperty("virtualFiles"))
+    mstr.virtualFiles = []
+
   if (!mstr.hasOwnProperty("toolchain"))
     mstr.toolchain = []
   
@@ -134,7 +137,7 @@ var microplatform = function(mstr){
         } else {
           prompt = "Compiling to: ".grey + chalk.grey.underline(argv["_"][1])
           console.log("   " + prompt)
-          helpers.runCompilers(argv, mstr.compilers, callback)
+          helpers.runCompilers({ argv: argv }, mstr.compilers, callback)
         }
       }
     }
@@ -143,9 +146,54 @@ var microplatform = function(mstr){
       return mstr
     }
 
+    obj.file = function(filePath, args, done){
+      if (!done){
+        done = args
+        args = {}
+      }
+
+      mstr.virtualFiles[filePath] = done
+
+      // add server
+      // mstr.servers.push(function(props, addMiddleware){
+      //   addMiddleware([function(req, rsp, next){
+      //     if ([filePath, filePath.replace(".html", "")].indexOf(req.url) === -1 ) return next()
+          
+      //     var r = function(cont){
+      //       rsp.send(cont)
+      //     }
+
+      //     r.send = r
+      //     r.json = function(cont){
+      //       rsp.json(cont)
+      //     }
+      //     done(props, r)
+      //   }])
+      // })
+
+      // add compiler
+      mstr.compilers.push(function(props, addCompilers){  
+        addCompilers([
+          function(publ, dist, next){
+            var fileName = path.resolve(dist + filePath)
+            
+            var r = function(cont){
+              fse.writeFile(fileName, cont, function(err){
+                next()
+              })
+            }
+            r.send = r
+            done(props, r)
+          }
+        ])
+      })
+
+      return obj
+    }
+
 
     obj.exec = function(args, callback){
-      callback = new Function
+      if (!callback) callback = new Function
 
       // we only have a callback
       if (typeof args === 'function'){
@@ -237,10 +285,66 @@ var microplatform = function(mstr){
                   if (count == total){
                     
                     server = express()
-                    
-                    // add all middleare
+
+
+                    // custom middleare
+                    server.use(function(req, rsp, next){
+                      if (req.url === "/"){ req.url = "/index.html" }
+                      next()
+                    })
+
+
+                    // custom middleare
                     all.forEach(function(m){
                       server.use(m)
+                    })
+
+
+                    // look for virtual files first.
+                    server.use(function(req, rsp, next){
+                      var fn = mstr.virtualFiles[req.url] || mstr.virtualFiles[req.url + ".html"] || null
+                      // return object
+                      var r = function(cont){ rsp.send(cont); }
+                      r.send = r
+                      r.json = function(cont){ rsp.json(cont); }
+                      // use if virtual file exists
+                      if (fn) return fn({ argv: argv }, r)
+                      return next()
+                    })
+
+
+                    // static middleare goes here
+                    server.use(express.static(argv["_"][0]))
+
+
+                    // look for virtual 200 file.
+                    server.use(function(req, rsp, next){
+                      var fn = mstr.virtualFiles["/200.html"] || null
+                      // return object
+                      var r = function(cont){ rsp.send(cont); }
+                      r.send = r
+                      r.json = function(cont){ rsp.json(cont); }
+                      // use if virtual file exists
+                      if (fn) return fn({ argv: argv }, r)
+                      return next()
+                    })
+
+
+                    // fallback 200 file
+                    server.use(function(req, rsp, next){
+                      fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
+                        if(contents){
+                          var body    = contents.toString()
+                          //var type    = helpers.mimeType("html")
+                          //var charset = mime.charsets.lookup(type)
+                          //rsp.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
+                          //rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                          rsp.statusCode = 200
+                          rsp.end(body)
+                        }else{
+                          next()
+                        }
+                      })
                     })
 
                     server.listen(port, function(){

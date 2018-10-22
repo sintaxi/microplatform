@@ -9,24 +9,21 @@ var contents  = "<h1>foobar</h1>"
 module.exports = core()(Object.assign(pkg, {
   boilerplate: path.resolve(__dirname, "../boilerplate"),
 
-  serve: function(cliProperties, addMiddleware){
+  serve: function(props, addMiddleware){
     
     addMiddleware([
       function(req, rsp, next){
         if (["/foo.html", "/foo"].indexOf(req.url) === -1 ) return next()
         rsp.send(contents)
-      },
+      }
 
-      function(req, rsp, next){
-        if (["/bar.html", "/bar"].indexOf(req.url) === -1 ) return next()
-        rsp.send(contents)
-      },
+      
 
-      express.static(cliProperties.argv["_"][0])
+      //express.static(props.argv["_"][0])
     ])
   },
 
-  compile: function(cliProperties, addCompilers){
+  compile: function(props, addCompilers){
     addCompilers([
       fse.copy,
       function(publ, dist, next){

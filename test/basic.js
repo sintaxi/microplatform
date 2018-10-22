@@ -37,21 +37,14 @@ describe("microplatform", function(){
 
   var check = function(web, file, status, done){
     var webPath = url.resolve("http://localhost:9000", web)
-    var filePath = path.normalize(__dirname + "/temp/foo" + file)
+    //var filePath = path.normalize(__dirname + "/temp/foo" + file)
     var compilefilePath = path.normalize(__dirname + "/temp/_foo" +  file)
-
     request.get(webPath).end(function(err, res){
-      
-      try {
-        var fileContents = fse.readFileSync(filePath).toString()
-      } catch(e) { var fileContents = null; }
-
       try {
         var compilefileContents = fse.readFileSync(compilefilePath).toString()
       } catch(e) { var compilefileContents = null; }
-
-      res.text.should.be.exactly(fileContents)
-      res.text.should.be.exactly(fileContents)
+      should.exist(res.text)
+      res.text.should.be.exactly(compilefileContents)
       res.status.should.be.equal(status)
       done()
     })  
