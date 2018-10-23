@@ -1,6 +1,6 @@
 
-var chalk = require("chalk")
-var path = require("path")
+var chalk     = require("chalk")
+var path      = require("path")
 var syncexec  = require("sync-exec")
 
 

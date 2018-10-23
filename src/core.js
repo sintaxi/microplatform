@@ -335,10 +335,10 @@ var microplatform = function(mstr){
                       fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
                         if(contents){
                           var body    = contents.toString()
-                          //var type    = helpers.mimeType("html")
-                          //var charset = mime.charsets.lookup(type)
-                          //rsp.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
-                          //rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                          var type    = mime.getType("html")
+                          var charset = 'UTF-8'
+                          rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                          rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
                           rsp.statusCode = 200
                           rsp.end(body)
                         }else{
@@ -365,11 +365,10 @@ var microplatform = function(mstr){
                     app.use(function(req, rsp, next){
                       fse.readFile(path.resolve(argv["_"][0], "404.html"), function(err, contents){
                         if(contents){
-                          var body      = contents.toString()
-                          //var type    = helpers.mimeType("html")
-                          //var charset = mime.charsets.lookup(type)
-                          //rsp.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
-                          //rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                          var body    = contents.toString()
+                          var charset = 'UTF-8'
+                          rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                          rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
                           rsp.statusCode = 200
                           rsp.end(body)
                         }else{
