@@ -13,7 +13,7 @@ var inquirer  = require('inquirer')
 var choices   = require("choices")
 var Menu      = require('terminal-menu')
 var helpers   = require('./helpers')
-
+var debug     = require("debug")
 
 var microplatform = function(mstr){
   if (!mstr) mstr = {}
@@ -40,8 +40,11 @@ var microplatform = function(mstr){
         mstr[attr] = config[attr]  
       }
     }
-    
+
+    var log = debug("microplatform:" + mstr.name || "unknown")
     var obj = microplatform(mstr)
+
+    log("debugging...")
 
     var platform = surge({
       name: mstr.name,
@@ -49,7 +52,9 @@ var microplatform = function(mstr){
     }) 
 
     obj.init = mstr.init || function(argv, done){
+      log("init project")
       if (mstr.boilerplates){
+        log("boilerplates:", mstr.boilerplates)
         fse.readdir(mstr.boilerplates, function(err, results){
           var dirs = results.filter(function (file) {
             return fse.statSync(path.join(mstr.boilerplates, file)).isDirectory()
@@ -82,11 +87,13 @@ var microplatform = function(mstr){
           }
         })
       }else if (mstr.boilerplate){
+        log("boilerplate:", mstr.boilerplates)
         fse.copy(path.join(mstr.boilerplate), argv["_"][0], function(){
           console.log("   Project generated".grey, chalk.grey.underline(argv["_"][0]))
           return done(argv)
         })
       }else{
+        log("boilerplate:", "fallback")
         fse.writeFile(argv._[0] + "/index.html", "<!doctype html><h1>hello world</h1>", function(err){
           return done(argv)
         })  
@@ -97,8 +104,10 @@ var microplatform = function(mstr){
     obj.server  = mstr.server  || []
 
     var findOrCreateProject = function(argv, callback){
+      log("findOrCreateProject")
       var projectPath = argv._[0]
       var projectAbsolutePath = path.resolve(projectPath)
+      log("projectAbsolutePath:", projectAbsolutePath)
       // check project to see if it exists or is empty
       fse.readdir(projectAbsolutePath, function(err, contents){
         if (err || (contents && contents.length < 1)) {
@@ -115,10 +124,12 @@ var microplatform = function(mstr){
 
 
     var compileOrPublish = function(argv, callback){
+      log("compileOrPublish")
       if (argv._.length > 1) {
         var destination = argv._[1]
         if (helpers.isDomain(destination)){
           var domain = destination
+          log("publish:", domain)
           tmp.dir(function(err, tmpPath, cleanupCallback) {
             if (err) throw err
             //console.log("    compiling and publishing to", chalk.green(destination))              
@@ -135,18 +146,22 @@ var microplatform = function(mstr){
             })
           })
         } else {
-          prompt = "Compiling to: ".grey + chalk.grey.underline(argv["_"][1])
+          log("compile:", destination)
+          prompt = "Compiling to: ".grey + chalk.grey.underline(destination)
           console.log("   " + prompt)
+          log(mstr.compilers)
           helpers.runCompilers({ argv: argv }, mstr.compilers, callback)
         }
       }
     }
 
     obj.settings = function(){
+      log("settings")
       return mstr
     }
 
     obj.file = function(filePath, args, done){
+      log("file")
       if (!done){
         done = args
         args = {}
@@ -263,20 +278,21 @@ var microplatform = function(mstr){
               //   middleware = obj.server(argv["_"][0], tmpDir)
               // }
 
-              //mstr.servers.push(defaultMiddleware)
-              //mstr.servers = mstr.servers.concat(defaultMiddleware)
+              // mstr.servers.push(defaultMiddleware)
+              // mstr.servers = mstr.servers.concat(defaultMiddleware)
 
               // fallback if none exist
               if (mstr.servers.length === 0){
-                mstr.servers = function(cli, addMiddleware){
+                mstr.servers.push(function(props, addMiddleware){
                   addMiddleware([function(req, rsp, next){ return next(); }])
-                }
+                })
               }
 
               var total = mstr.servers.length
               var count = 0
               var all   = []
               var that = this
+
               mstr.servers.forEach(function(cluster){
 
                 cluster.call(this, { argv: argv }, function(fns){
@@ -335,7 +351,6 @@ var microplatform = function(mstr){
                       fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
                         if(contents){
                           var body    = contents.toString()
-                          var type    = mime.getType("html")
                           var charset = 'UTF-8'
                           rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
                           rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));

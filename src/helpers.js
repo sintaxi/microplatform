@@ -2,7 +2,9 @@
 var chalk     = require("chalk")
 var path      = require("path")
 var syncexec  = require("sync-exec")
+var debug     = require("debug")
 
+var log = debug("micrplatform:helpers")
 
 exports.help = function(config){
   var versiontxt = ''
@@ -63,6 +65,7 @@ exports.quickhelp = function(config){
 
 
 exports.isDomain = function(destination){
+  log("isDomain", destination)
   if (destination == "_"){
     return true
   }
@@ -77,6 +80,7 @@ exports.isDomain = function(destination){
 
 
 exports.installSync = function(argv){
+  log("installSync")
   var projectPath = argv._[0]
   var projectAbsolutePath = path.resolve(projectPath)
   var command = `cd ${projectAbsolutePath}; npm install`
@@ -92,6 +96,7 @@ exports.installSync = function(argv){
 
 
 exports.sift = function(record, stack, callback){
+  log("sift")
   if(!stack) stack = []
   
   var that  = this;
@@ -108,6 +113,8 @@ exports.sift = function(record, stack, callback){
 
 
 exports.runCompilers = function(props, compilers, callback){
+  log("runCompilers")
+  if (compilers.length === 0) return callback()
   var total = compilers.length
   var count = 0
   var stack = []

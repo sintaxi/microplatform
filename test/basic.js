@@ -13,18 +13,25 @@ describe("microplatform", function(){
   before(function(done){
     
     var platform = microplatform({
-      serve: function(project, server){
-        server([function(req, rsp, next){
-          if (["/foo", "/foo.html"].indexOf(req.url) === -1 ) return next()
-          rsp.send(contents)
-        }])
+      serve: function(props, addMiddleware){
+        addMiddleware([
+          function(req, rsp, next){
+            if (["/foo.html", "/foo"].indexOf(req.url) === -1 ) return next()
+            rsp.send(contents)
+          }
+        ])
       },
-      compile: function(project, compiler){
-        compiler([function(src, dist, next){
-          fse.writeFile(dist + "/foo.html", contents, function(err){
-            next()
-          })
-        }])
+
+      compile: function(props, addCompilers){
+        addCompilers([
+          fse.copy,
+          function(publ, dist, next){
+            var fileName = path.resolve(dist + "/foo.html")
+            fse.writeFile(fileName, contents, function(err){
+              next()
+            })
+          }
+        ])
       }
     })
 
