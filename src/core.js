@@ -12,8 +12,10 @@ var syncexec  = require("sync-exec")
 var inquirer  = require('inquirer')
 var choices   = require("choices")
 var Menu      = require('terminal-menu')
-var helpers   = require('./helpers')
+var helpers   = require('./helpers.js')
 var debug     = require("debug")
+var project   = require("./project.js")
+var fs        = require("fs")
 
 var microplatform = function(mstr){
   if (!mstr) mstr = {}
@@ -24,12 +26,15 @@ var microplatform = function(mstr){
   if (!mstr.hasOwnProperty("compilers"))
     mstr.compilers = []
 
+  if (!mstr.hasOwnProperty("beforeStack"))
+    mstr.beforeStack = []
+
   if (!mstr.hasOwnProperty("virtualFiles"))
     mstr.virtualFiles = []
 
   if (!mstr.hasOwnProperty("toolchain"))
     mstr.toolchain = []
-  
+
   return function(config){
     for (var attr in config) { 
       if (attr == "serve"){
@@ -150,7 +155,35 @@ var microplatform = function(mstr){
           prompt = "Compiling to: ".grey + chalk.grey.underline(destination)
           console.log("   " + prompt)
           log(mstr.compilers)
-          helpers.runCompilers({ argv: argv }, mstr.compilers, callback)
+
+          //helpers.runCompilers(argv, mstr.compilers, callback)
+
+          
+          // compile
+          project({ 
+            argv: argv,
+            virtuals: mstr.virtualFiles,
+            glob: mstr.glob || "*"
+          }, function(err, list){
+            var compilePath = argv._[1]
+            var compileAbsolutePath = path.resolve(compilePath)
+            var total = Object.keys(list).length
+            var count = 0
+            fse.mkdirp(compileAbsolutePath, function(){
+              for (var key in list)(function(key){
+                var fn = list[key]
+                fn(function(err, contents){
+                  var filePath = path.join(compileAbsolutePath, key)
+                  fs.writeFile(filePath, contents, 'utf8', function(e){
+                    count++
+                    if (count == total) return callback()
+                  })
+                })
+              })(key)
+            })
+          })
+          
+          
         }
       }
     }
@@ -192,18 +225,24 @@ var microplatform = function(mstr){
           function(publ, dist, next){
             var fileName = path.resolve(dist + filePath)
             
-            var r = function(cont){
+            var rq = function(cont){
               fse.writeFile(fileName, cont, function(err){
                 next()
               })
             }
-            r.send = r
-            done(props, r)
+            rq.file = filePath
+            rq.send = rq
+            done(props, rq)
           }
         ])
       })
 
       return obj
+    }
+
+
+    obj.before = function(fn){
+      mstr.beforeStack.push(fn)
     }
 
 
@@ -253,6 +292,14 @@ var microplatform = function(mstr){
 
         findOrCreateProject(argv, function(argv){
           helpers.installSync(argv)
+
+          // global
+
+          var listFilesSync = function(){
+            return fse.readDirSync(argv["_"][0])
+          }
+
+
           if (argv._.length > 1){
             compileOrPublish(argv, function(argv){
               console.log()
@@ -292,6 +339,7 @@ var microplatform = function(mstr){
               var count = 0
               var all   = []
               var that = this
+              //delete argv["_"]
 
               mstr.servers.forEach(function(cluster){
 
@@ -316,81 +364,137 @@ var microplatform = function(mstr){
                     })
 
 
-                    // look for virtual files first.
+                    // initialize project
                     app.use(function(req, rsp, next){
-                      var fn = mstr.virtualFiles[req.url] || mstr.virtualFiles[req.url + ".html"] || null
-                      // return object
-                      var r = function(cont){ rsp.send(cont); }
-                      r.send = r
-                      r.json = function(cont){ rsp.json(cont); }
-                      // use if virtual file exists
-                      if (fn) return fn({ argv: argv }, r)
-                      return next()
+                      project({ 
+                        argv: argv,
+                        virtuals: mstr.virtualFiles,
+                        glob: mstr.glob || "*"
+                      }, function(err, list){
+                        req.list = list
+                        return next()
+                      })
                     })
+
+                    // /index.html
+                    app.use(function(req, rsp, next){
+                      if (!req.list[req.url]) return next()
+                      req.list[req.url](function(err, contents){
+                        var charset = 'UTF-8'
+                        rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                        rsp.setHeader('Content-Length', Buffer.byteLength(contents, charset))
+                        rsp.status(200).send(contents)
+                      })
+                    })
+
+
+                    // /200.html
+                    app.use(function(req, rsp, next){
+                      if (!req.list["/200.html"]) return next()
+                      req.list[req.url](function(err, contents){
+                        var charset = 'UTF-8'
+                        rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                        rsp.setHeader('Content-Length', Buffer.byteLength(contents, charset))
+                        rsp.status(200).send(contents)
+                      })
+                    })
+
+
+                    // /404.html
+                    app.use(function(req, rsp, next){
+                      if (!req.list["/404.html"]) return next()
+                      req.list[req.url](function(err, contents){
+                        var charset = 'UTF-8'
+                        rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                        rsp.setHeader('Content-Length', Buffer.byteLength(contents, charset))
+                        rsp.status(404).send(contents)
+                      })
+                    })
+
+
+                    // // look for virtual files first.
+                    // app.use(function(req, rsp, next){
+                    //   var fn = mstr.virtualFiles[req.url] || mstr.virtualFiles[req.url + ".html"] || null
+                      
+                    //   var rq = argv
+                    //   rq.file = req.url
+                    //   //rq.listFilesSync = listFilesSync
+
+                    //   // return object
+                    //   var rp = function(cont){ rsp.send(cont); }
+                    //   rp.send = rp
+                    //   rp.json = function(cont){ rsp.json(cont); }
+                    //   // use if virtual file exists
+
+                      
+
+                    //   if (fn) return fn(rq, rp)
+                    //   return next()
+                    // })
 
 
                     // static middleare goes here
-                    app.use(express.static(argv["_"][0]))
+                    // app.use(express.static(argv["_"][0]))
 
 
                     // look for virtual 200 file.
-                    app.use(function(req, rsp, next){
-                      var fn = mstr.virtualFiles["/200.html"] || null
-                      // return object
-                      var r = function(cont){ rsp.send(cont); }
-                      r.send = r
-                      r.json = function(cont){ rsp.json(cont); }
-                      // use if virtual file exists
-                      if (fn) return fn({ argv: argv }, r)
-                      return next()
-                    })
+                    // app.use(function(req, rsp, next){
+                    //   var fn = mstr.virtualFiles["/200.html"] || null
+                    //   // return object
+                    //   var r = function(cont){ rsp.send(cont); }
+                    //   r.send = r
+                    //   r.json = function(cont){ rsp.json(cont); }
+                    //   // use if virtual file exists
+                    //   if (fn) return fn({ argv: argv }, r)
+                    //   return next()
+                    // })
 
 
                     // fallback 200 file
-                    app.use(function(req, rsp, next){
-                      fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
-                        if(contents){
-                          var body    = contents.toString()
-                          var charset = 'UTF-8'
-                          rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
-                          rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
-                          rsp.statusCode = 200
-                          rsp.end(body)
-                        }else{
-                          next()
-                        }
-                      })
-                    })
+                    // app.use(function(req, rsp, next){
+                    //   fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
+                    //     if(contents){
+                    //       var body    = contents.toString()
+                    //       var charset = 'UTF-8'
+                    //       rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                    //       rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                    //       rsp.statusCode = 200
+                    //       rsp.end(body)
+                    //     }else{
+                    //       next()
+                    //     }
+                    //   })
+                    // })
 
 
-                    // look for virtual 404 file.
-                    app.use(function(req, rsp, next){
-                      var fn = mstr.virtualFiles["/404.html"] || null
-                      // return object
-                      var r = function(cont){ rsp.send(cont); }
-                      r.send = r
-                      r.json = function(cont){ rsp.json(cont); }
-                      // use if virtual file exists
-                      if (fn) return fn({ argv: argv }, r)
-                      return next()
-                    })
+                    // // look for virtual 404 file.
+                    // app.use(function(req, rsp, next){
+                    //   var fn = mstr.virtualFiles["/404.html"] || null
+                    //   // return object
+                    //   var r = function(cont){ rsp.send(cont); }
+                    //   r.send = r
+                    //   r.json = function(cont){ rsp.json(cont); }
+                    //   // use if virtual file exists
+                    //   if (fn) return fn({ argv: argv }, r)
+                    //   return next()
+                    // })
 
 
                     // fallback 404 file
-                    app.use(function(req, rsp, next){
-                      fse.readFile(path.resolve(argv["_"][0], "404.html"), function(err, contents){
-                        if(contents){
-                          var body    = contents.toString()
-                          var charset = 'UTF-8'
-                          rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
-                          rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
-                          rsp.statusCode = 200
-                          rsp.end(body)
-                        }else{
-                          next()
-                        }
-                      })
-                    })
+                    // app.use(function(req, rsp, next){
+                    //   fse.readFile(path.resolve(argv["_"][0], "404.html"), function(err, contents){
+                    //     if(contents){
+                    //       var body    = contents.toString()
+                    //       var charset = 'UTF-8'
+                    //       rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
+                    //       rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
+                    //       rsp.statusCode = 200
+                    //       rsp.end(body)
+                    //     }else{
+                    //       next()
+                    //     }
+                    //   })
+                    // })
 
                     app.listen(port, function(){
                       console.log("   Dev server running ".grey + chalk.underline(chalk.grey("http://localhost:" + port)))

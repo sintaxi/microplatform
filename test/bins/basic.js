@@ -19,10 +19,3 @@ ssg.file("/layo.html", function(props, done){
   done("layo")
 })
 
-ssg.template("md:html", function(props, rsp){
-  re
-})
-
-ssg.data("md:html", function(props, done){
-  done("layo")
-})

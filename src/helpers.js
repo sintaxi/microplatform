@@ -3,8 +3,10 @@ var chalk     = require("chalk")
 var path      = require("path")
 var syncexec  = require("sync-exec")
 var debug     = require("debug")
+var fs        = require("fs")
+var log       = debug("micrplatform:helpers")
 
-var log = debug("micrplatform:helpers")
+exports.ls = fs.readdir
 
 exports.help = function(config){
   var versiontxt = ''
@@ -112,15 +114,22 @@ exports.sift = function(record, stack, callback){
 }
 
 
-exports.runCompilers = function(props, compilers, callback){
+exports.runCompilers = function(argv, compilers, callback){
   log("runCompilers")
   if (compilers.length === 0) return callback()
   var total = compilers.length
   var count = 0
   var stack = []
 
+  var sourceDir = argv["_"][0]
+  var destDir = argv["_"][1]
+
+  delete argv["_"]
+
   compilers.forEach(function(cluster){
-    cluster(props, function(fns){
+    cluster({
+      root: sourceDir
+    }, function(fns){
       count++
       stack = stack.concat(fns)
       if (count == total){
@@ -130,7 +139,7 @@ exports.runCompilers = function(props, compilers, callback){
         function next(){
           var layer = stack[index++]
           if(!layer) return callback()
-          layer.call(that, props.argv["_"][0], props.argv["_"][1], next)
+          layer.call(that, sourceDir, destDir, next)
         }
         next()
       }

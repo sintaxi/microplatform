@@ -12,39 +12,35 @@ describe("microplatform", function(){
 
   before(function(done){
     
-    var platform = microplatform({
-      serve: function(props, addMiddleware){
-        addMiddleware([
-          function(req, rsp, next){
-            if (["/foo.html", "/foo"].indexOf(req.url) === -1 ) return next()
-            rsp.send(contents)
-          }
-        ])
-      },
+    var platform = microplatform()
 
-      compile: function(props, addCompilers){
-        addCompilers([
-          function(publ, dist, next){
-            var fileName = path.resolve(dist + "/foo.html")
-            fse.writeFile(fileName, contents, function(err){
-              next()
-            })
-          }
-        ])
+    // platform.before(function(props, next){
+    //   platform.listFiles()
+    //   props.cool = true
+    //   next(props)
+    // })
+
+    platform.file("/props.json", function(req, rsp){
+      var obj = {
+        projectPath: req.projectPath,
+        publicPath: req.publicPath,
+        filePath: req.filePath,
+        file: req.file
       }
+      rsp.send(JSON.stringify(obj, null, 2))
     })
 
-    platform.exec("test/temp/foo test/temp/_foo", function(err){
-      platform.exec("test/temp/foo --port 9000", function(err){
+    platform.exec("test/temp/props test/temp/_props", function(err){
+      platform.exec("test/temp/props --port 9003", function(err){
         done()
       })
     })
   })
 
   var check = function(web, file, status, done){
-    var webPath = url.resolve("http://localhost:9000", web)
+    var webPath = url.resolve("http://localhost:9003", web)
     //var filePath = path.normalize(__dirname + "/temp/foo" + file)
-    var compilefilePath = path.normalize(__dirname + "/temp/_foo" +  file)
+    var compilefilePath = path.normalize(__dirname + "/temp/_props" +  file)
     request.get(webPath).end(function(err, res){
       try {
         var compilefileContents = fse.readFileSync(compilefilePath).toString()
@@ -52,7 +48,7 @@ describe("microplatform", function(){
       should.exist(res.text)
       res.text.should.be.exactly(compilefileContents)
       res.status.should.be.equal(status)
-      done()
+      done(compilefileContents)
     })  
   }
   
@@ -64,15 +60,14 @@ describe("microplatform", function(){
   })
 
   it("should return root", function(done){
-    check("/", "/index.html", 200, done)
-  })
-
-  it("should return index.html file", function(done){
-    check("/index.html", "/index.html", 200, done)
-  })
-
-  it("should return foo.html file", function(done){
-    check("/foo", "/foo.html", 200, done)
+    check("/props.json", "/props.json", 200, function(contents){
+      var obj = JSON.parse(contents)
+      obj.should.have.property("file")
+      obj.should.have.property("filePath")
+      obj.should.have.property("projectPath")
+      obj.should.have.property("publicPath")
+      done()
+    })
   })
 
   after(function(done){
