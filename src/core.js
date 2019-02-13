@@ -220,22 +220,22 @@ var microplatform = function(mstr){
       // })
 
       // add compiler
-      mstr.compilers.push(function(props, addCompilers){  
-        addCompilers([
-          function(publ, dist, next){
-            var fileName = path.resolve(dist + filePath)
+      // mstr.compilers.push(function(props, addCompilers){  
+      //   addCompilers([
+      //     function(publ, dist, next){
+      //       var fileName = path.resolve(dist + filePath)
             
-            var rq = function(cont){
-              fse.writeFile(fileName, cont, function(err){
-                next()
-              })
-            }
-            rq.file = filePath
-            rq.send = rq
-            done(props, rq)
-          }
-        ])
-      })
+      //       var rq = function(cont){
+      //         fse.writeFile(fileName, cont, function(err){
+      //           next()
+      //         })
+      //       }
+      //       rq.file = filePath
+      //       rq.send = rq
+      //       done(props, rq)
+      //     }
+      //   ])
+      // })
 
       return obj
     }
@@ -347,7 +347,6 @@ var microplatform = function(mstr){
                   count++
                   all = all.concat(fns)
                   if (count == total){
-                    
                     app = express()
 
 
@@ -376,6 +375,7 @@ var microplatform = function(mstr){
                       })
                     })
 
+
                     // /index.html
                     app.use(function(req, rsp, next){
                       if (!req.list[req.url]) return next()
@@ -391,7 +391,7 @@ var microplatform = function(mstr){
                     // /200.html
                     app.use(function(req, rsp, next){
                       if (!req.list["/200.html"]) return next()
-                      req.list[req.url](function(err, contents){
+                      req.list["/200.html"](function(err, contents){
                         var charset = 'UTF-8'
                         rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
                         rsp.setHeader('Content-Length', Buffer.byteLength(contents, charset))
@@ -403,7 +403,7 @@ var microplatform = function(mstr){
                     // /404.html
                     app.use(function(req, rsp, next){
                       if (!req.list["/404.html"]) return next()
-                      req.list[req.url](function(err, contents){
+                      req.list["/404.html"](function(err, contents){
                         var charset = 'UTF-8'
                         rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
                         rsp.setHeader('Content-Length', Buffer.byteLength(contents, charset))
@@ -412,95 +412,12 @@ var microplatform = function(mstr){
                     })
 
 
-                    // // look for virtual files first.
-                    // app.use(function(req, rsp, next){
-                    //   var fn = mstr.virtualFiles[req.url] || mstr.virtualFiles[req.url + ".html"] || null
-                      
-                    //   var rq = argv
-                    //   rq.file = req.url
-                    //   //rq.listFilesSync = listFilesSync
-
-                    //   // return object
-                    //   var rp = function(cont){ rsp.send(cont); }
-                    //   rp.send = rp
-                    //   rp.json = function(cont){ rsp.json(cont); }
-                    //   // use if virtual file exists
-
-                      
-
-                    //   if (fn) return fn(rq, rp)
-                    //   return next()
-                    // })
-
-
-                    // static middleare goes here
-                    // app.use(express.static(argv["_"][0]))
-
-
-                    // look for virtual 200 file.
-                    // app.use(function(req, rsp, next){
-                    //   var fn = mstr.virtualFiles["/200.html"] || null
-                    //   // return object
-                    //   var r = function(cont){ rsp.send(cont); }
-                    //   r.send = r
-                    //   r.json = function(cont){ rsp.json(cont); }
-                    //   // use if virtual file exists
-                    //   if (fn) return fn({ argv: argv }, r)
-                    //   return next()
-                    // })
-
-
-                    // fallback 200 file
-                    // app.use(function(req, rsp, next){
-                    //   fse.readFile(path.resolve(argv["_"][0], "200.html"), function(err, contents){
-                    //     if(contents){
-                    //       var body    = contents.toString()
-                    //       var charset = 'UTF-8'
-                    //       rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
-                    //       rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
-                    //       rsp.statusCode = 200
-                    //       rsp.end(body)
-                    //     }else{
-                    //       next()
-                    //     }
-                    //   })
-                    // })
-
-
-                    // // look for virtual 404 file.
-                    // app.use(function(req, rsp, next){
-                    //   var fn = mstr.virtualFiles["/404.html"] || null
-                    //   // return object
-                    //   var r = function(cont){ rsp.send(cont); }
-                    //   r.send = r
-                    //   r.json = function(cont){ rsp.json(cont); }
-                    //   // use if virtual file exists
-                    //   if (fn) return fn({ argv: argv }, r)
-                    //   return next()
-                    // })
-
-
-                    // fallback 404 file
-                    // app.use(function(req, rsp, next){
-                    //   fse.readFile(path.resolve(argv["_"][0], "404.html"), function(err, contents){
-                    //     if(contents){
-                    //       var body    = contents.toString()
-                    //       var charset = 'UTF-8'
-                    //       rsp.setHeader('Content-Type', 'text/html' + (charset ? '; charset=' + charset : ''))
-                    //       rsp.setHeader('Content-Length', Buffer.byteLength(body, charset));
-                    //       rsp.statusCode = 200
-                    //       rsp.end(body)
-                    //     }else{
-                    //       next()
-                    //     }
-                    //   })
-                    // })
-
                     app.listen(port, function(){
                       console.log("   Dev server running ".grey + chalk.underline(chalk.grey("http://localhost:" + port)))
                       console.log()
                       return callback(argv)
                     })
+
                   }
                 })
               })

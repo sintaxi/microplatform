@@ -6,7 +6,7 @@ var url = require("url")
 var request = require("superagent")
 var fse = require("fs-extra")
 
-describe("microplatform", function(){
+describe("simple", function(){
 
   var contents = "<h1>foobar</h1>"
 
@@ -63,9 +63,9 @@ describe("microplatform", function(){
     check("/props.json", "/props.json", 200, function(contents){
       var obj = JSON.parse(contents)
       obj.should.have.property("file")
-      obj.should.have.property("filePath")
-      obj.should.have.property("projectPath")
-      obj.should.have.property("publicPath")
+      // obj.should.have.property("filePath")
+      // obj.should.have.property("projectPath")
+      // obj.should.have.property("publicPath")
       done()
     })
   })

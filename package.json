@@ -7,7 +7,7 @@
   "main": "./src/lib.js",
   "bin": "./src/cli",
   "scripts": {
-    "test": "mocha test/static.js"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",

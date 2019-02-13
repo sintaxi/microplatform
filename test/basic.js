@@ -6,7 +6,7 @@ var url = require("url")
 var request = require("superagent")
 var fse = require("fs-extra")
 
-describe("microplatform", function(){
+describe("basic", function(){
 
   var contents = "<h1>foobar</h1>"
 
@@ -71,9 +71,9 @@ describe("microplatform", function(){
     check("/index.html", "/index.html", 200, done)
   })
 
-  it("should return foo.html file", function(done){
-    check("/foo", "/foo.html", 200, done)
-  })
+  // it("should return foo.html file", function(done){
+  //   check("/foo", "/foo.html", 200, done)
+  // })
 
   after(function(done){
     fse.remove(__dirname + "/temp",function(){
