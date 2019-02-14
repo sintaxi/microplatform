@@ -92,7 +92,7 @@ exports.installSync = function(argv){
     console.log()
     syncexec(command, { stdio: [0, 1, 2] })
   }catch(r){
-    console.log("   " + "Not Found: package.json".grey)
+    console.log("   " + ("Not Found: " + projectPath + "/package.json").grey)
   }
 }
 
