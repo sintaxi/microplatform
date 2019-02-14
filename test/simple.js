@@ -22,9 +22,6 @@ describe("simple", function(){
 
     platform.file("/props.json", function(req, rsp){
       var obj = {
-        projectPath: req.projectPath,
-        publicPath: req.publicPath,
-        filePath: req.filePath,
         file: req.file
       }
       rsp.send(JSON.stringify(obj, null, 2))
