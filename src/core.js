@@ -130,6 +130,28 @@ var microplatform = function(mstr){
 
     var compileOrPublish = function(argv, callback){
       log("compileOrPublish")
+
+      var compile = function(compileAbsolutePath, cb){
+        project({ 
+          argv: argv,
+          virtuals: mstr.virtualFiles,
+          glob: mstr.glob || "*"
+        }, function(err, list){
+          var total = Object.keys(list).length
+          var count = 0
+          for (var key in list)(function(key){
+            var fn = list[key]
+            fn(function(err, contents){
+              var filePath = path.join(compileAbsolutePath, key)
+              fs.writeFile(filePath, contents, 'utf8', function(e){
+                count++
+                if (count == total) return cb()
+              })
+            })
+          })(key)
+        })
+      }
+
       if (argv._.length > 1) {
         var destination = argv._[1]
         if (helpers.isDomain(destination)){
@@ -137,10 +159,8 @@ var microplatform = function(mstr){
           log("publish:", domain)
           tmp.dir(function(err, tmpPath, cleanupCallback) {
             if (err) throw err
-            //console.log("    compiling and publishing to", chalk.green(destination))              
-            obj.compile(argv["_"][0], tmpPath, function(err){
-              if (err) throw err
 
+            compile(tmpPath, function(){
               argv["_"][0] = tmpPath
               platform.publish({
                 postPublish: function(req, next){
@@ -149,7 +169,16 @@ var microplatform = function(mstr){
                 }
               })(argv)
             })
+          
+            //console.log("    compiling and publishing to", chalk.green(destination))              
+            // obj.compile(argv["_"][0], tmpPath, function(err){
+            //   if (err) throw err
+
+              
+            // })
+
           })
+
         } else {
           log("compile:", destination)
           prompt = "Compiling to: ".grey + chalk.grey.underline(destination)
@@ -157,31 +186,35 @@ var microplatform = function(mstr){
           log(mstr.compilers)
 
           //helpers.runCompilers(argv, mstr.compilers, callback)
-
           
-          // compile
-          project({ 
-            argv: argv,
-            virtuals: mstr.virtualFiles,
-            glob: mstr.glob || "*"
-          }, function(err, list){
-            var compilePath = argv._[1]
-            var compileAbsolutePath = path.resolve(compilePath)
-            var total = Object.keys(list).length
-            var count = 0
-            fse.mkdirp(compileAbsolutePath, function(){
-              for (var key in list)(function(key){
-                var fn = list[key]
-                fn(function(err, contents){
-                  var filePath = path.join(compileAbsolutePath, key)
-                  fs.writeFile(filePath, contents, 'utf8', function(e){
-                    count++
-                    if (count == total) return callback()
-                  })
-                })
-              })(key)
-            })
+          var compilePath = argv._[1]
+          var compileAbsolutePath = path.resolve(compilePath)
+          fse.mkdirp(compileAbsolutePath, function(){
+            return compile(compileAbsolutePath, callback)  
           })
+
+          // project({ 
+          //   argv: argv,
+          //   virtuals: mstr.virtualFiles,
+          //   glob: mstr.glob || "*"
+          // }, function(err, list){
+          //   var compilePath = argv._[1]
+          //   var compileAbsolutePath = path.resolve(compilePath)
+          //   var total = Object.keys(list).length
+          //   var count = 0
+          //   fse.mkdirp(compileAbsolutePath, function(){
+          //     for (var key in list)(function(key){
+          //       var fn = list[key]
+          //       fn(function(err, contents){
+          //         var filePath = path.join(compileAbsolutePath, key)
+          //         fs.writeFile(filePath, contents, 'utf8', function(e){
+          //           count++
+          //           if (count == total) return callback()
+          //         })
+          //       })
+          //     })(key)
+          //   })
+          // })
           
           
         }
